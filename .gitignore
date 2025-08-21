@@ -1,0 +1,47 @@
+# =============================
+# Global GitIgnore for MERN Practice Projects
+# =============================
+
+# Node.js dependencies (all sub-projects)
+**/node_modules/
+
+# Logs (all sub-projects)
+**/logs
+**/*.log
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# Environment files (all sub-projects)
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+
+# Build outputs (React/Next.js etc.)
+**/dist/
+**/build/
+**/.cache/
+**/.next/
+
+# Coverage reports
+**/coverage/
+
+# MongoDB local data (if any dumped locally)
+/data/db
+
+# Editor/OS specific files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+
+# Misc
+*.pid
+*.seed
+*.pid.lock
