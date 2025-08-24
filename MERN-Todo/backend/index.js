@@ -4,11 +4,15 @@ import connectToDB from './db/db.js';
 import User from './models/User.js'
 import authRouter from './routes/auth.js'
 import noteRouter from './routes/note.js'
+import cors from 'cors'
 dotenv.config();
 
 const app = express()
 app.use(express.json())
-
+const corsOptions = {
+  origin: 'http://localhost:5173',
+};
+app.use(cors(corsOptions))
 
 app.use('/api/auth',authRouter)
 app.use('/api/note',noteRouter)

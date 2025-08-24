@@ -22,7 +22,7 @@ router.post('/register', registerValidationRules, async (req, res) => {
         const userExists = await User.findOne({ email: email })
 
         if (userExists) {
-            return res.status(400).json({ success: false, message: "this email is already registered." })
+            return res.status(400).json({ success: false, message: "This email is already registered." })
         }
 
         const salt = await bcrypt.genSalt(10)
@@ -32,9 +32,9 @@ router.post('/register', registerValidationRules, async (req, res) => {
             name, email, password: hashedPassword
         })
 
-        return res.status(200).json({ success: true, message: "user registered successfully." })
+        return res.status(200).json({ success: true, message: "User registered successfully." })
     } catch (error) {
-        return res.status(500).json({ success: false, message: "internal server error." })
+        return res.status(500).json({ success: false, message: "Internal server error." })
     }
 
 
@@ -48,13 +48,13 @@ router.post('/login', async (req, res) => {
         const user = await User.findOne({ email })
 
         if (!user) {
-            return res.status(400).json({ success: false, message: "user is not registered." })
+            return res.status(400).json({ success: false, message: "User is not registered." })
         }
 
         const passwordCorrect =await bcrypt.compare(password, user.password);
         
         if (!passwordCorrect) {
-            return res.status(401).json({ success: false, message: "invalid credentials." })
+            return res.status(401).json({ success: false, message: "Invalid credentials." })
         }
 
         const token = jwt.sign({ id: user._id, name: user.name, email: user.email }, process.env.JWT_SECRET, {
@@ -63,7 +63,7 @@ router.post('/login', async (req, res) => {
 
         return res.status(200).json({ success: true, authorization: token })
     } catch (error) {
-        return res.status(500).json({ success: false, message: "internal server error." })
+        return res.status(500).json({ success: false, message: "Internal server error." })
     }
 
 

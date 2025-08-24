@@ -13,9 +13,9 @@ router.post('/add', authMiddleware, async (req, res) => {
             description,
             userId: req.user.id
         })
-        return res.status(200).json({ success: true, message: "note added successfully.", id: note._id })
+        return res.status(200).json({ success: true, message: "Note added successfully.", id: note._id })
     } catch (error) {
-        return res.status(500).json({ success: false, message: "internal server error." })
+        return res.status(500).json({ success: false, message: "Internal server error." })
     }
 
 })
@@ -27,12 +27,12 @@ router.delete('/delete/:id', authMiddleware, async (req, res) => {
 
         const note = await Note.findById(noteId)
         if (note.userId != req.user.id) {
-            return res.status(401).json({ success: false, message: "unauthorized" })
+            return res.status(401).json({ success: false, message: "Unauthorized" })
         }
         await Note.findByIdAndDelete(noteId)
-        return res.status(200).json({ success: true, message: "note deleted successfully.", id: note._id })
+        return res.status(200).json({ success: true, message: "Note deleted successfully.", id: note._id })
     } catch (error) {
-        return res.status(500).json({ success: false, message: "internal server error." })
+        return res.status(500).json({ success: false, message: "Internal server error." })
     }
 
 })
@@ -46,9 +46,9 @@ router.get('/getall', authMiddleware, async (req, res) => {
         const notes = await Note.find({userId})
         //console.log(notes)
         
-        return res.status(200).json({ success: true, message: "note fetched successfully.",notes })
+        return res.status(200).json({ success: true, message: "Note fetched successfully.",notes })
     } catch (error) {
-        return res.status(500).json({ success: false, message: "internal server error." })
+        return res.status(500).json({ success: false, message: "Internal server error." })
     }
 
 })
@@ -62,14 +62,14 @@ router.put('/edit/:id', authMiddleware, async (req, res) => {
 
         const note = await Note.findById(noteId)
         if (note.userId != req.user.id) {
-            return res.status(401).json({ success: false, message: "unauthorized" })
+            return res.status(401).json({ success: false, message: "Unauthorized" })
         }
 
         const updatedNote= await Note.findByIdAndUpdate(noteId,{title,description},{new:true})
 
-        return res.status(200).json({ success: true, message: "note updated successfully.", updatedNote })
+        return res.status(200).json({ success: true, message: "Note updated successfully.", updatedNote })
     } catch (error) {
-        return res.status(500).json({ success: false, message: "internal server error." })
+        return res.status(500).json({ success: false, message: "Internal server error." })
     }
 
 })
