@@ -3,7 +3,7 @@ import User from "../models/User.js";
 import bcrypt from 'bcryptjs'
 import { registerValidationRules } from '../validators/authValidator.js';
 import { validationResult } from 'express-validator';
-import jwt  from 'jsonwebtoken'
+import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -12,7 +12,8 @@ const router = express.Router()
 
 router.post('/register', registerValidationRules, async (req, res) => {
     try {
-        const { name, email, password } = req.body
+        let { name, email, password } = req.body
+        email = email.toLowerCase()
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -43,7 +44,8 @@ router.post('/register', registerValidationRules, async (req, res) => {
 
 router.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body
+        let { email, password } = req.body
+        email = email.toLowerCase()
 
         const user = await User.findOne({ email })
 
@@ -51,8 +53,8 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ success: false, message: "User is not registered." })
         }
 
-        const passwordCorrect =await bcrypt.compare(password, user.password);
-        
+        const passwordCorrect = await bcrypt.compare(password, user.password);
+
         if (!passwordCorrect) {
             return res.status(401).json({ success: false, message: "Invalid credentials." })
         }
