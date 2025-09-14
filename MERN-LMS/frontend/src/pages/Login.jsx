@@ -5,6 +5,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import { useDispatch } from 'react-redux';
 import { add } from '../redux/userSlice';
+import { ToastContainer, toast } from 'react-toastify';
 
 const Login = () => {
     const dispatch = useDispatch();
@@ -32,14 +33,17 @@ const Login = () => {
             .then(function (response) {
                 if (!response.data.success) {
                     setLoginErr(response.data.message);
+                    toast.error('Login failed!')
                 } else {
                     localStorage.setItem('authorization', response.data.authorization);
                     dispatch(add(response.data.authorization));
+                    toast.success('Login successful!')
                     navigate('/');
                 }
             })
             .catch(function (error) {
                 setLoginErr(error.response?.data?.message || error.message);
+                toast.error('Login failed!')
             });
     };
 
@@ -51,6 +55,7 @@ const Login = () => {
 
     const onGoogleError = (error) => {
         setLoginErr(error);
+        toast.error('Login failed!')
     };
 
     const handleNormalLogin = (e) => {
@@ -129,7 +134,7 @@ const Login = () => {
                 </form>
 
                 <p className="text-center text-sm text-gray-600">
-                    <span className='text-red-500'>{loginErr}</span><br />
+                    <span className='text-red-600 text-bold'>{loginErr}</span><br />
                     Don't have an account?{' '}
                     <Link to="/signup" className="font-semibold hover:text-gray-800">Sign up here</Link>
                 </p>

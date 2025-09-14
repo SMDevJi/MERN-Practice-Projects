@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaFacebookF, FaTwitter, FaInstagram } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
 
 const Footer = () => {
   return (
@@ -15,16 +16,16 @@ const Footer = () => {
         
         <ul className="flex space-x-6 mb-4 md:mb-0">
           <li>
-            <Link to="" className="hover:text-white transition">Home</Link>
+            <Link to="#" className="hover:text-white transition">Privacy Policy</Link>
           </li>
           <li>
-            <Link to="/feedback" className="hover:text-white transition">Feedback</Link>
+            <Link to="#" className="hover:text-white transition">Terms of Service</Link>
           </li>
           <li>
-            <Link to="/about" className="hover:text-white transition">About</Link>
+            <Link to="#" className="hover:text-white transition">Help Center</Link>
           </li>
           <li>
-            <Link to="/contact" className="hover:text-white transition">Contact Us</Link>
+            <Link to="#" className="hover:text-white transition">Support</Link>
           </li>
         </ul>
 
@@ -42,10 +43,11 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Copyright */}
+      
       <div className="text-center text-sm text-white mt-6">
         &copy; 2025 LMS. All rights reserved.
       </div>
+      <ToastContainer />
     </footer>
   );
 };

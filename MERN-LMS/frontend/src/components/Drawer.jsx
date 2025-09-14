@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import DropOn from '../assets/dropdown-on.svg'; // Your SVG icon
 import { Link } from 'react-router-dom';
 
-export default function Drawer({ authorization,handleLogout }) {
+export default function Drawer({ authorization, handleLogout, decoded }) {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
@@ -26,33 +26,64 @@ export default function Drawer({ authorization,handleLogout }) {
                 <div className="ml-3 p-3 mt-20 font-medium text-xl">
                     <Link to="/">Home</Link>
                 </div>
-                <div className="ml-3 p-3 font-medium text-xl">
-                    <Link to="/feedback">Feedback</Link>
-                </div>
-                <div className="ml-3 p-3 font-medium text-xl">
-                    <Link to="/about">About</Link>
-                </div>
+                {decoded?.isTutor ? (
+                    <>
+                        <div className="ml-3 p-3 font-medium text-xl">
+                            <Link to='/create-course'>Create Course</Link>
+                        </div>
+                        <div className="ml-3 p-3 font-medium text-xl">
+                            <Link to='/course-orders'>Course Orders</Link>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div className="ml-3 p-3 font-medium text-xl">
+                            <Link to="/feedback">Feedback</Link>
+                        </div>
+                        <div className="ml-3 p-3 font-medium text-xl">
+                            <Link to="/about">About</Link>
+                        </div>
+                    </>
+                )}
+
                 <div className="ml-3 p-3 font-medium text-xl">
                     <Link to="/contact">Contact</Link>
                 </div>
                 {authorization == '' ?
                     <>
-                        <button
-                            className="mt-3 ml-6 text-base text-black font-medium bg-white hover:bg-gray-200 p-2 px-4 rounded-md"
-                        >
-                            <Link to='/login'>Login</Link>
-                        </button>
+                        <Link to='/login'>
+                            <button
+                                className=" cursor-pointer mt-3 ml-6 text-base text-black font-medium bg-white hover:bg-gray-200 p-2 px-4 rounded-md"
+                            >
+                                Login
+                            </button>
+                        </Link>
                     </>
                     :
                     <>
-                        <button
-                            className="mt-3 ml-6 text-base text-black font-medium bg-white hover:bg-gray-200 p-2 px-4 rounded-md"
-                        >
-                            <Link to='/profile'>Profile</Link>
-                        </button>
+
+                        {decoded?.isTutor ? (
+                            <Link to='/dashboard'>
+                                <button
+                                    className="cursor-pointer mt-3 ml-6 text-base text-black font-medium bg-white hover:bg-gray-200 p-2 px-4 rounded-md"
+                                >
+                                    Dashboard
+                                </button>
+                            </Link>
+                        ) : (
+                            <Link to='/profile'>
+                                <button
+                                    className="cursor-pointer mt-3 ml-6 text-base text-black font-medium bg-white hover:bg-gray-200 p-2 px-4 rounded-md"
+                                >
+                                    Profile
+                                </button>
+                            </Link>
+                        )}
+
+
                         <button
                             onClick={handleLogout}
-                            className="mt-3 ml-6 text-base text-black font-medium bg-white hover:bg-gray-200 p-2 px-4 rounded-md"
+                            className="cursor-pointer mt-3 ml-6 text-base text-black font-medium bg-white hover:bg-gray-200 p-2 px-4 rounded-md"
                         >
                             Logout
                         </button>

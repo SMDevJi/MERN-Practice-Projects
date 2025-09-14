@@ -6,6 +6,7 @@ import { validationResult } from 'express-validator';
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv';
+import authMiddleware from "../middleware/middleware.js";
 dotenv.config();
 
 const router = express.Router()
@@ -72,13 +73,6 @@ router.post('/login', async (req, res) => {
             const userToReturn = await User.findOne({ email });
             if (!userToReturn) {
                 return res.status(400).json({ success: false, message: "User not found" });
-                // await User.create({
-                //     name: payload.name,
-                //     email,
-                //     password: '',
-                //     isOauth: true,
-                //     picture: payload.picture,
-                // });
             }
             if(userToReturn.isTutor!=isTutor){
                 return res.status(400).json({ success: false, message: `Please login as ${userToReturn.isTutor?'tutor':'student'}` });
@@ -127,6 +121,35 @@ router.post('/login', async (req, res) => {
     }
 });
 
+
+
+
+router.post('/reissue-token',authMiddleware, async (req, res) => {
+    try {
+        const email=req.user.email
+        
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ success: false, message: "User not found" });
+        }
+
+
+        const newToken = jwt.sign({
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            isOauth: user.isOauth,
+            picture: user.picture,
+            enrolledCourses: user.enrolledCourses,
+            isTutor:user.isTutor
+        }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRESIN });
+
+        return res.status(200).json({ success: true, authorization: newToken });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+});
 
 
 export default router

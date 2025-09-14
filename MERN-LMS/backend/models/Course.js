@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema, model } from 'mongoose';
 
-const lectureSchema = new mongoose.Schema({
+const lectureSchema = new Schema({
   title: {
     type: String,
     required: true,
@@ -13,10 +13,15 @@ const lectureSchema = new mongoose.Schema({
   isFree: {
     type: Boolean,
     default: false
+  },
+  order: {
+    type: Number,
+    required: true,
+    default: 0
   }
 });
 
-const courseSchema = new mongoose.Schema({
+const courseSchema = new Schema({
   title: {
     type: String,
     required: true,
@@ -25,7 +30,15 @@ const courseSchema = new mongoose.Schema({
   subtitle: {
     type: String,
     trim: true,
-    required:true
+    required: true
+  },
+  tutorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user'
+  },
+  tutor: {
+    type: String,
+    required: true
   },
   description: {
     type: String,
@@ -41,25 +54,40 @@ const courseSchema = new mongoose.Schema({
     min: 0
   },
   whatsLearned: {
-    type: [String],
-    default: []
+    type: String,
+    default: ""
   },
   language: {
     type: String,
-    required:true,
+    required: true,
     default: 'English'
   },
   thumbnail: {
     type: String,
-    required:true
+    required: true
   },
   lectures: {
     type: [lectureSchema],
     default: []
+  },
+  polarProductId: {
+    type: String,
+    required: true,
+    default:''
   }
 }, {
   timestamps: true
 });
 
-const courceModel=mongoose.model('course', courseSchema);
-export default courceModel
+//its for setting order value before saving
+// courseSchema.pre('save', function(next) {
+//   if (this.isModified('lectures')) {
+//     this.lectures.forEach((lecture, index) => {
+//       lecture.order = index + 1;
+//     });
+//   }
+//   next();
+// });
+
+const courseModel = model('course', courseSchema);
+export default courseModel;

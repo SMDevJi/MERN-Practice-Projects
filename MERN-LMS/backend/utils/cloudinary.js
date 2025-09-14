@@ -26,20 +26,28 @@ export const generateUploadSignature = (folder) => {
 };
 
 
-export const deleteImage = async (url) => {
-    if (!url.includes("cloudinary")) return
+export const deleteFile = async (url) => {
+    if (!url.includes("cloudinary")) return;
 
     const afterUpload = url.split('/upload/')[1];
     const withoutVersion = afterUpload.replace(/^v\d+\//, '');
     const id = withoutVersion.substring(0, withoutVersion.lastIndexOf('.'));
 
-    //console.log(id, url)
+    
+    const resourceType = url.includes('/video/') ? 'video' : 'image';
+
+    //console.log(id, url, resourceType);
+
     try {
-        const result = await cloudinary.uploader.destroy(id, { invalidate: true });
-        //console.log(result)
+        const result = await cloudinary.uploader.destroy(id, {
+            invalidate: true,
+            resource_type: resourceType,
+        });
+        console.log(result);
         return result;
     } catch (error) {
-        console.error('❌ Cloudinary Delete Error:', error);
+        console.error(' Cloudinary Delete Error:', error);
         throw error;
     }
 };
+

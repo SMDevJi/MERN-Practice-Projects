@@ -9,6 +9,10 @@ router.post('/generate-signature', authMiddleware, (req, res) => {
   let folder
   if (field == 'ProfilePic') {
     folder = 'MernLMS/ProfilePics'
+  } else if (field == 'Thumbnail') {
+    folder = 'MernLMS/Thumbnails'
+  } else if (field == 'Lecture') {
+    folder = 'MernLMS/Lectures'
   }
   try {
     const data = generateUploadSignature(folder);

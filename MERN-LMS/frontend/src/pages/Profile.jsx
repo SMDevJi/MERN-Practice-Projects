@@ -16,19 +16,38 @@ import { Button } from '@/components/ui/button';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { add } from '@/redux/userSlice';
+import { toast } from 'react-toastify';
+import { isJwtExpired } from '@/utils/utilities';
+import CourseCard from '@/components/CourseCard';
+import Loading from '@/components/Loading';
 
 
 
 function Profile() {
   const [image, setImage] = useState(null);
+  const [imgPreviewUrl, setImgPreviewUrl] = useState(null)
   const [editName, setEditName] = useState('');
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [couseLoading, setCouseLoading] = useState(false)
+  const [enrolledCourses, setEnrolledCourses] = useState([])
 
   const authorization = useSelector((state) => state.user.authorization);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!image) return;
+
+    const objectUrl = URL.createObjectURL(image);
+    setImgPreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [image]);
+
 
   let decoded = null;
 
@@ -38,6 +57,7 @@ function Profile() {
     }
   } catch (err) {
     console.error("Invalid token");
+    navigate("/login")
   }
 
   useEffect(() => {
@@ -46,14 +66,37 @@ function Profile() {
       return;
     }
 
-    const currentTime = Date.now() / 1000;
-    if (decoded.exp < currentTime) {
+
+    if (isJwtExpired(authorization)) {
       navigate('/login');
       return;
     }
 
     setEditName(decoded.name || '');
   }, [authorization, navigate]);
+
+
+  const loadEnrolledCourses = () => {
+    const params = decoded.enrolledCourses.map(id => `courseId=${id}`).join('&');
+    const options = {
+      method: 'GET',
+      url: `${import.meta.env.VITE_BACKEND_URL}/api/course/get-course/?${params}`,
+    };
+    setCouseLoading(true)
+    axios.request(options).then(function (response) {
+      console.log(response.data);
+      setEnrolledCourses(response.data.courses)
+    }).catch(function (error) {
+      console.error(error);
+    }).finally(() =>
+      setCouseLoading(false)
+    );
+  }
+
+
+  useEffect(() => {
+    loadEnrolledCourses()
+  }, [])
 
   const getSignature = async () => {
     const res = await axios.post(
@@ -102,6 +145,7 @@ function Profile() {
     );
 
     const newToken = response.data.authorization;
+    localStorage.setItem('authorization', newToken)
     dispatch(add(newToken));
   };
 
@@ -119,15 +163,16 @@ function Profile() {
     } catch (err) {
       console.error(err);
       setError('Something went wrong');
-    }finally{
+    } finally {
       setSaving(false)
+      toast.success("Profile updated successfully!")
     }
   };
 
   if (!decoded) return null;
 
   return (
-    <div className='container w-full min-h-[95vh] flex justify-center p-3'>
+    <div className='wrapper w-full min-h-[95vh] flex flex-col items-center p-3'>
       <div className="shadow-sm shadow-gray-400 profile-details-wrapper w-full max-w-[400px] h-full mt-25 rounded-xl p-6 break-all">
         <div className="section1 flex items-center gap-4">
           <img
@@ -160,6 +205,12 @@ function Profile() {
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                   />
+                  {image && (
+                    <div className="new-video-preview mt-6">
+                      <h1 className='mb-2 font-semibold text-sm'>New Picture..</h1>
+                      <img src={imgPreviewUrl} className="w-full max-h-60" />
+                    </div>
+                  )}
                   <Label htmlFor="picture" className='ml-2'>Picture</Label>
                   <Input
                     id="picture"
@@ -176,13 +227,31 @@ function Profile() {
                 <DialogClose asChild>
                   <Button variant='default'>Close</Button>
                 </DialogClose>
-                <Button className={saving?'bg-gray-500 hover:bg-gray-500':''} variant='default' onClick={handleFileUpload}>
-                  {saving?'Saving':'Save'}
+                <Button className={saving ? 'bg-gray-500 hover:bg-gray-500' : ''} variant='default' onClick={handleFileUpload}>
+                  {saving ? 'Saving..' : 'Save'}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
+      </div>
+      <div className="enrolled-courses mt-5">
+        <h1 className='text-xl font-semibold text-center'>Your purchased courses</h1>
+        {couseLoading ? <Loading /> :
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-[1500px] p-5">
+            {decoded && enrolledCourses.map(course => {
+              let courseArray = {
+                id: course._id,
+                title: course.title,
+                tutor: course.tutor,
+                image: course.thumbnail
+              };
+              return <CourseCard product={courseArray} />
+            }
+            )}
+          </div>
+        }
+
       </div>
     </div>
   );

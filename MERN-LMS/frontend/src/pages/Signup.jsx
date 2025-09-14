@@ -4,6 +4,7 @@ import axios from 'axios';
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from 'jwt-decode';
 import { useEffect } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
 
 const Signup = () => {
     const [name, setName] = useState('');
@@ -38,15 +39,19 @@ const Signup = () => {
         axios.request(options).then(function (response) {
             if (!response.data.success) {
                 setRegisterErr(response.data.message);
+                toast.error('Registration failed!')
             } else {
-                navigate('/login');
+                toast.success('Registration successful!')
+                navigate('/login');  
             }
             console.log(response.data);
         }).catch(function (error) {
             try {
                 setRegisterErr(error.response.data.message);
+                toast.error('Registration failed!')
             } catch {
                 setRegisterErr(error.message);
+                toast.error('Registration failed!')
             }
             console.error(error.message);
         });
@@ -74,6 +79,7 @@ const Signup = () => {
     const onGoogleError = (error) => {
         console.log(error);
         setRegisterErr(error);
+        toast.error('Registration failed!')
     };
 
     return (
@@ -195,6 +201,7 @@ const Signup = () => {
                     </Link>
                 </p>
             </div>
+           
         </div>
     );
 };
