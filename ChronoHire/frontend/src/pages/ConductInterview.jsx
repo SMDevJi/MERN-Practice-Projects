@@ -10,11 +10,9 @@ import { useNavigate, useParams } from 'react-router-dom'
 import Webcam from 'react-webcam'
 import { HiOutlineSpeakerWave } from "react-icons/hi2";
 import { toast } from 'sonner'
-import useSpeechToText from 'react-hook-speech-to-text';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition'
 import { FaMicrophoneSlash, FaMicrophone } from "react-icons/fa";
 import { setCoins } from '@/redux/userSlice'
-
-
 
 function ConductInterview() {
     const { interviewId } = useParams();
@@ -27,22 +25,31 @@ function ConductInterview() {
     const dispatch = useDispatch();
     const [selectedIdx, setSelectedIdx] = useState(0);
     const [answersArr, setAnswersArr] = useState([]);
-    const [userAnswer, setUserAnswer] = useState('');
     const [disabledBtns, setDisabledBtns] = useState([]);
     const [startTime, setStartTime] = useState(null);
     const [isUserRecording, setIsUserRecording] = useState(false);
+    const [userAnswer, setUserAnswer] = useState('');
+
+    useEffect(() => {
+        console.log(userAnswer, answersArr)
+    }, [isUserRecording])
+
+    //for fixing bug: vite excluding the library in built version
+    useEffect(() => {
+        // Prevent tree-shaking of SpeechRecognition
+        if (typeof window !== 'undefined') {
+            window.__keep_SR = SpeechRecognition;
+        }
+    }, []);
+
+
 
     const {
-        error,
-        isRecording,
-        results,
-        startSpeechToText,
-        stopSpeechToText,
-    } = useSpeechToText({
-        continuous: true,
-        useLegacyResults: false,
-        timeout: 900000,
-    });
+        transcript,
+        listening,
+        resetTranscript,
+        browserSupportsSpeechRecognition
+    } = useSpeechRecognition();
 
     const loadInterview = async () => {
         try {
@@ -82,52 +89,51 @@ function ConductInterview() {
         }
     };
 
-    const handleRecordButtonClick = () => {
+    const handleRecordButtonClick = async () => {
+        if (!browserSupportsSpeechRecognition) {
+            toast.error("Speech recognition not supported in this browser!");
+            return;
+        }
+
         if (isUserRecording) {
-            // Delay to let last speech result finalize
-            if (userAnswer.trim()) {
-                stopSpeechToText();
-                setIsUserRecording(false);
+            // Stop Recording
+            SpeechRecognition.stopListening();
+            setIsUserRecording(false);
+            setUserAnswer(transcript.trim());
 
-                setTimeout(() => {
-                    commitAnswerImmediately();
-                }, 400);
-            }
-
+            setTimeout(() => {
+                commitAnswerImmediately();
+            }, 400);
         } else {
+            // Start Recording
+            await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            resetTranscript();
             setUserAnswer('');
-            startSpeechToText();
             setIsUserRecording(true);
+            SpeechRecognition.startListening({ continuous: true, language: 'en-US' });
         }
     };
 
     const commitAnswerImmediately = () => {
+        if (!transcript.trim()) {
+            toast.warning("No answer detected!");
+            return;
+        }
+
         setAnswersArr(prevArr => {
             const updated = [...prevArr];
             updated[selectedIdx] = {
                 ...updated[selectedIdx],
-                transcript: userAnswer.trim()
+                transcript: transcript.trim()
             };
             return updated;
         });
 
         setDisabledBtns(prev => [...new Set([...prev, selectedIdx])]);
         toast.success("Answer recorded successfully!");
+        resetTranscript();
     };
-
-    useEffect(() => {
-        if (results.length === 0) return;
-
-        const lastResult = results[results.length - 1];
-        if (lastResult?.transcript) {
-            setUserAnswer(prev => prev + lastResult.transcript);
-        }
-    }, [results]);
-
-    useEffect(() => {
-        console.log(userAnswer, answersArr)
-        setUserAnswer('');
-    }, [selectedIdx]);
 
     useEffect(() => {
         loadInterview();
@@ -164,8 +170,8 @@ function ConductInterview() {
             );
 
             if (response.data.success) {
-                dispatch(setCoins(response.data.coinBalance))
-                localStorage.setItem('coins',response.data.coinBalance)
+                dispatch(setCoins(response.data.coinBalance));
+                localStorage.setItem('coins', response.data.coinBalance);
                 navigate(`/show-evaluation/${interviewId}`);
             }
         } catch (err) {
@@ -196,7 +202,9 @@ function ConductInterview() {
         return (
             <div className='wrapper min-h-[80vh] px-4 flex justify-center items-center flex-col'>
                 <Loading />
-                <h1 className='text-center text-2xl -mt-15 text-gray-500'>Submitting and evaluating your answers, please wait..</h1>
+                <h1 className='text-center text-2xl -mt-15 text-gray-500'>
+                    Submitting and evaluating your answers, please wait..
+                </h1>
             </div>
         );
     }
@@ -210,24 +218,31 @@ function ConductInterview() {
                             {interview?.lastAttempt?.questions.map((question, idx) =>
                                 <button key={idx}
                                     disabled={disabledBtns?.includes(idx)}
-                                    className={`${disabledBtns.includes(idx) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} outline-1 rounded-xl px-1.5 py-1.5 text-xs sm:text-sm  ${selectedIdx === idx ? 'bg-blue-800 text-white' : ''}`}
+                                    className={`${disabledBtns.includes(idx) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} outline-1 rounded-xl px-1.5 py-1.5 text-xs sm:text-sm ${selectedIdx === idx ? 'bg-blue-800 text-white' : ''}`}
                                     onClick={() => {
-                                        if (!isRecording && !isUserRecording) {
-                                            setSelectedIdx(idx)
+                                        if (!isUserRecording && !listening) {
+                                            setSelectedIdx(idx);
                                         }
                                     }}>
                                     Question #{idx + 1}
                                 </button>
                             )}
                         </div>
-                        <h1 className='text-md font-semibold'>{interview.lastAttempt?.questions[selectedIdx].question}</h1>
+                        <h1 className='text-md font-semibold'>
+                            {interview.lastAttempt?.questions[selectedIdx].question}
+                        </h1>
                         <HiOutlineSpeakerWave size={25} className='cursor-pointer' onClick={textToSpeech} />
                     </div>
+
                     <div className="detail outline-1 rounded p-4 text-blue-500 bg-blue-100 mb-5 text-sm">
-                        <h1 className=' font-bold flex leading-none items-center'><MdLightbulbOutline size={28} />Note:</h1>
-                        <h1 className=' font-semibold'>Click on Record Answer when you want to answer the question. At the end of
+                        <h1 className='font-bold flex leading-none items-center'>
+                            <MdLightbulbOutline size={28} />Note:
+                        </h1>
+                        <h1 className='font-semibold'>
+                            Click on Record Answer when you want to answer the question. At the end of
                             interview, we will give you the feedback along with the correct answer for each of
-                            the questions and your answer to compare it.</h1>
+                            the questions and your answer to compare it.
+                        </h1>
                     </div>
                 </div>
 
@@ -246,26 +261,23 @@ function ConductInterview() {
                             }
                         </Button>
 
+                        <h1 className='mt-2 font-semibold'>Answer preview:</h1>
+                        <p>{transcript}</p>
+
                         <div className="nav-btns mt-5 md:mt-10 mb-8 w-full flex justify-start sm:justify-end flex-wrap gap-2 ">
                             {selectedIdx > 0 && (
                                 <Button className='bg-purple-600 hover:bg-purple-800 cursor-pointer px-3'
                                     onClick={() => {
-                                        const newIndex = selectedIdx - 1;
-
-                                        if (isUserRecording && isRecording) {
+                                        if (isUserRecording && listening) {
                                             toast.error("Stop recording before navigating.");
                                             return;
                                         }
+                                        const newIndex = selectedIdx - 1;
                                         if (disabledBtns.includes(newIndex)) {
                                             toast.warning("This question has already been answered.");
                                             return;
                                         }
-
-
                                         setSelectedIdx(id => id - 1);
-
-
-
                                     }}>
                                     Previous Question
                                 </Button>
@@ -274,25 +286,16 @@ function ConductInterview() {
                             {selectedIdx < answersArr.length - 1 ? (
                                 <Button className='bg-purple-600 hover:bg-purple-800 cursor-pointer px-3'
                                     onClick={() => {
-                                        const newIndex = selectedIdx + 1;
-
-                                        if (isUserRecording && isRecording) {
+                                        if (isUserRecording && listening) {
                                             toast.error("Stop recording before moving to next question.");
                                             return;
                                         }
-
+                                        const newIndex = selectedIdx + 1;
                                         if (disabledBtns.includes(newIndex)) {
                                             toast.warning("This question has already been answered.");
                                             return;
                                         }
-
-
                                         setSelectedIdx(id => id + 1);
-
-
-                                        console.log(disabledBtns, userAnswer.trim())
-
-
                                     }}>
                                     Next Question
                                 </Button>

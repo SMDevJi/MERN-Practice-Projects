@@ -8,7 +8,7 @@ import mongoose from "mongoose";
 dotenv.config();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-const endpointSecret = 'whsec_QIZwWI3EjWnQVMqJ1jOw2HfZmLYK1KlW';
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 
 const plans = [
